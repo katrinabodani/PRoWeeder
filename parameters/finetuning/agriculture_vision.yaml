@@ -1,0 +1,152 @@
+# IMPROVED Agriculture-Vision Fine-tuning Configuration for RoWeeder
+# Key changes:
+# - Added class weighting
+# - Reduced learning rate
+# - Added warmup
+# - Better augmentation settings
+
+experiment:
+  name: roweeder_agriculture_vision_v2
+  seed: 42
+  
+data:
+  dataset_name: agriculture_vision
+  dataset_path: dataset/finetuning_dataset/agriculture_vision_2019
+  num_workers: 2  # Increased for better data loading
+  batch_size: 4  # Increased from 2 (adjust based on your GPU)
+  pin_memory: true
+  
+  # Image specifications
+  image_size: 512
+  num_channels: 4  # RGB + NIR
+  num_classes: 7  # 0: background, 1: crop, 2-6: anomalies
+  
+  # Class names for reference
+  class_names:
+    - background
+    - crop
+    - planter_skip
+    - water
+    - weed_cluster
+    - nutrient_deficiency
+    - waterway
+  
+  # Train/Val split
+  splits:
+    train: train
+    val: val
+    test: test
+
+model:
+  architecture: roweeder_flat
+  
+  # Pretrained weights
+  use_pretrained: true  # Load from pasqualedem/roweeder_flat_512x512
+  
+  # Model parameters
+  in_channels: 4  # RGB + NIR
+  num_classes: 7  # Agriculture-Vision classes
+  
+  # Fine-tuning strategy
+  freeze_encoder: false  # Train all layers
+
+training:
+  epochs: 100  # Increased for better convergence
+  
+  # Optimizer
+  optimizer:
+    type: AdamW
+    lr: 0.00005  # REDUCED from 0.0001 - very important!
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+  
+  # Gradient clipping - CRITICAL for stability
+  grad_clip: 1.0
+  
+  # Mixed precision training
+  use_amp: true
+  
+  # Class weighting - NEW and IMPORTANT
+  use_class_weights: true  # Calculate and use inverse frequency weights
+  
+  # Learning rate scheduler
+  scheduler:
+    type: ReduceLROnPlateau
+    mode: max
+    factor: 0.5
+    patience: 10
+    min_lr: 0.000001
+  
+  # Loss function
+  loss:
+    type: combined
+    components:
+      - type: CrossEntropyLoss
+        weight: 1.0
+        ignore_index: 0  # Ignore background class
+      - type: DiceLoss
+        weight: 0.5
+  
+  # Validation
+  val_frequency: 1  # Validate every epoch
+  save_frequency: 5  # Save checkpoint every 5 epochs
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 20
+    monitor: val_f1_score
+    mode: max
+
+evaluation:
+  metrics:
+    - IoU
+    - F1Score
+    - Precision
+    - Recall
+  
+  per_class_metrics: true
+  save_confusion_matrix: true
+
+augmentation:
+  train:
+    horizontal_flip: 0.5
+    vertical_flip: 0.5
+    random_rotate_90: 0.5
+    affine:
+      scale: [0.9, 1.1]
+      translate_percent: [0.1, 0.1]
+      rotate: [-15, 15]
+      p: 0.3  # Reduced from 0.5 - less aggressive
+    brightness_contrast:
+      brightness_limit: 0.15  # Reduced from 0.2
+      contrast_limit: 0.15    # Reduced from 0.2
+      p: 0.3  # Reduced from 0.5
+    normalize:
+      mean: [0.485, 0.456, 0.406, 0.5]  # RGB + NIR
+      std: [0.229, 0.224, 0.225, 0.25]
+  
+  val:
+    normalize:
+      mean: [0.485, 0.456, 0.406, 0.5]
+      std: [0.229, 0.224, 0.225, 0.25]
+
+logging:
+  use_tensorboard: true
+  use_wandb: false
+  
+  log_frequency: 10
+  save_dir: outputs/agriculture_vision_v2  # Changed directory name
+  
+  checkpoint:
+    save_best_only: false
+    save_last: true
+    monitor: val_f1_score
+    mode: max
+
+inference:
+  tta: false
+  batch_size: 8
+  save_predictions: true
+  save_visualizations: true
+  visualization_frequency: 50

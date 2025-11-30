@@ -1,0 +1,124 @@
+Metadata-Version: 2.4
+Name: roweeder
+Version: 1.0.0
+Summary: RoWeeder: A deep learning model for weed detection and crop row segmentation
+Author-email: Pasquale De Marinis <pasquale.demarinis@unicatt.it>
+License: LICENSE
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: torch>=1.12.0
+Requires-Dist: torchvision>=0.13.0
+Requires-Dist: transformers>=4.25.0
+Requires-Dist: accelerate>=0.20.0
+Requires-Dist: wandb>=0.13.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: scipy>=1.7.0
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: scikit-image>=0.19.0
+Requires-Dist: opencv-python>=4.5.0
+Requires-Dist: Pillow>=8.3.0
+Requires-Dist: matplotlib>=3.4.0
+Requires-Dist: seaborn>=0.11.0
+Requires-Dist: tqdm>=4.62.0
+Requires-Dist: torchmetrics>=0.10.0
+Requires-Dist: ptflops>=0.7.0
+Requires-Dist: safetensors>=0.3.0
+Requires-Dist: albumentations>=1.1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.2; extra == "dev"
+Requires-Dist: pytest-cov>=2.12; extra == "dev"
+Requires-Dist: black>=21.5b0; extra == "dev"
+Requires-Dist: flake8>=3.9; extra == "dev"
+Requires-Dist: isort>=5.9; extra == "dev"
+Dynamic: license-file
+
+# RoWeeder: Unsupervised Weed Mapping through Crop-Row Detection
+
+This is official implementation for our CVPPA 2024 paper.
+
+![RoWeeder method](res/method.svg)
+
+RoWeeder is an innovative framework for **unsupervised weed mapping** that combines *crop-row detection* with a *noise-resilient* deep learning model. By leveraging crop-row information to create a pseudo-ground truth, our method trains a lightweight deep learning model capable of distinguishing between crops and weeds, even in the presence of noisy data. 
+
+Evaluated on the WeedMap dataset, RoWeeder achieves an F1 score of 75.3, outperforming several baselines. Comprehensive ablation studies further validated the model's performance. 
+
+By integrating RoWeeder with drone technology, farmers can conduct real-time aerial surveys, enabling precise weed management across large fields.
+
+## Installation
+
+Prepare the environment
+
+```bash
+conda create -n SSLWeedMap python=3.11
+conda activate SSLWeedMap
+# Install from environment.yml
+conda env update --file environment.yml
+```
+
+## Preprocessing
+
+For each field (000, 001, 002, 003, 004)
+
+### Download and extract the dataset
+
+```bash
+wget http://robotics.ethz.ch/~asl-datasets/2018-weedMap-dataset-release/Orthomosaic/RedEdge.zip -d dataset/
+unzip dataset/RedEdge.zip -d dataset/
+```
+
+### Rotate the images
+
+```bash
+python3 main.py rotate --root dataset/RedEdge/000 --outdir dataset/rotated_ortho/000 --angle -46 &
+python3 main.py rotate --root dataset/RedEdge/001 --outdir dataset/rotated_ortho/001 --angle -48 &
+python3 main.py rotate --root dataset/RedEdge/002 --outdir dataset/rotated_ortho/002 --angle -48 &
+python3 main.py rotate --root dataset/RedEdge/003 --outdir dataset/rotated_ortho/003 --angle -48 &
+python3 main.py rotate --root dataset/RedEdge/004 --outdir dataset/rotated_ortho/004 --angle -48
+```
+
+### Patchify the images
+```bash
+python3 main.py patchify --root dataset/rotated_ortho/000 --outdir dataset/patches/512/000 --patch_size 512 &
+python3 main.py patchify --root dataset/rotated_ortho/001 --outdir dataset/patches/512/001 --patch_size 512 &
+python3 main.py patchify --root dataset/rotated_ortho/002 --outdir dataset/patches/512/002 --patch_size 512 &
+python3 main.py patchify --root dataset/rotated_ortho/003 --outdir dataset/patches/512/003 --patch_size 512 &
+python3 main.py patchify --root dataset/rotated_ortho/004 --outdir dataset/patches/512/004 --patch_size 512
+```
+
+
+### Generate the pseudo GT
+    
+```bash
+python3 main.py label --outdir dataset/generated --parameters parameters/row_detect/69023956.yaml
+```
+
+## Train the RoWeeder Flat model
+    
+```bash
+python3 main.py experiment --parameters=parameters/folds/flat.yaml
+```
+
+## Get the model for inference from HuggingFace hub
+
+```python
+from roweeder.models import RoWeederFlat
+model = RoWeederFlat.from_pretrained("pasqualedem/roweeder_flat_512x512")
+```
+
+## Citation
+
+If you find this work useful, please consider citing our paper (in press):
+
+```
+@inproceedings{de2025roweeder,
+  title={RoWeeder: Unsupervised Weed Mapping through Crop-Row Detection},
+  author={De Marinis, Pasquale and Vessio, Gennaro and Castellano, Giovanna},
+  booktitle={European Conference on Computer Vision},
+  pages={132--145},
+  year={2025},
+  organization={Springer}
+}
+```
