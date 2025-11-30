@@ -336,18 +336,18 @@ with gr.Blocks(title="PRoWeeder") as demo:
                 outputs=[output_image, stats_plot]
             )
             
-            # Examples
-            gr.Examples(
-                examples=[
-                    ["examples/example1.png", "Phase 1 Finetuned (Agriculture-Vision)", "Agriculture-Vision (7 classes)", 60, True],
-                    ["examples/example2.png", "Reproduced RoWeeder (Our Training)", "WeedMap (3 classes)", 70, True],
-                    ["examples/example3.png", "Baseline RoWeeder (HuggingFace)", "WeedMap (3 classes)", 50, False],
-                ],
-                inputs=[input_image, model_dropdown, dataset_type, opacity_slider, show_stats_checkbox],
-                outputs=[output_image, stats_plot],
-                fn=predict,
-                cache_examples=False,
-            )
+            # # Examples
+            # gr.Examples(
+            #     examples=[
+            #         ["examples/example1.png", "Phase 1 Finetuned (Agriculture-Vision)", "Agriculture-Vision (7 classes)", 60, True],
+            #         ["examples/example2.png", "Reproduced RoWeeder (Our Training)", "WeedMap (3 classes)", 70, True],
+            #         ["examples/example3.png", "Baseline RoWeeder (HuggingFace)", "WeedMap (3 classes)", 50, False],
+            #     ],
+            #     inputs=[input_image, model_dropdown, dataset_type, opacity_slider, show_stats_checkbox],
+            #     outputs=[output_image, stats_plot],
+            #     fn=predict,
+            #     cache_examples=False,
+            # )
         
         # Tab 2: Model Comparison
         with gr.Tab("Model Comparison"):
@@ -429,7 +429,7 @@ with gr.Blocks(title="PRoWeeder") as demo:
                 **2. Reproduced RoWeeder (Our Training)**
                 - Trained from scratch following the paper methodology
                 - Uses crop-row detection pseudo-labels
-                - Performance: Target 75.3% F1 on WeedMap
+                - Performance: 42.5% F1 on WeedMap test set
                 - Channels: RGB (3 channels)
                 - Output: Always 3 classes (bg, crop, weed)
                 - Use case: Best for sugar beet fields
@@ -491,8 +491,8 @@ with gr.Blocks(title="PRoWeeder") as demo:
                 | Model | WeedMap F1 | Ag-Vision F1 | Channels |
                 |-------|------------|--------------|----------|
                 | Baseline | 37.4% | 2.2% | RGB |
-                | Reproduced | ~75% (target) | - | RGB |
-                | Phase 1 | 65.2% | 67.0% | RGB+NIR |
+                | Reproduced | 42.5%| 15.3% | RGB |
+                | Finetuned | 65.2% | 67.0% | RGB+NIR |
                 
                 ### Technical Details
                 
