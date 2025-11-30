@@ -1,6 +1,6 @@
 # RoWeeder Reproduction & Extension to PRoWeeder
 
-**Computer Vision Course Project - 2025**
+**Computer Vision Course Project - Fall 2025**
 
 This project reproduces and extends the RoWeeder framework for unsupervised weed mapping. We implement the original RoWeeder method and explore cross-domain transfer learning using the Agriculture-Vision dataset.
 
