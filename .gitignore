@@ -1,5 +1,6 @@
 .idea
 dataset
+outputs/
 venv
 wandb
 wandb_cache
