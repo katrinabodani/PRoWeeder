@@ -1,6 +1,6 @@
 .idea
 dataset
-outputs/
+outputs
 venv
 wandb
 wandb_cache
@@ -9,3 +9,6 @@ checkpoints
 
 *.pth
 *.pyc
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
